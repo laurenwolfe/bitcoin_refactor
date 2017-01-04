@@ -9,6 +9,7 @@
 #include "BlockChain.h"
 #include "Block.h"
 #include "Shared.h"
+#include "Transaction.h"
 
 using namespace std;
 
@@ -17,7 +18,7 @@ int main(int argc, char *argv[]) {
     uint32_t read_idx = 0, total_txns = 1, processed_txns = 0;
 
     vector<uint8_t> binary_data;
-    unordered_map<string, Transaction> txns;
+    unordered_map<string, Transaction *> txns;
     unordered_map<string, set<uint32_t>> unused_outputs;
     unordered_map<string, uint32_t> bitcoin_ledger;
 

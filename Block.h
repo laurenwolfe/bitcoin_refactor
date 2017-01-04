@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <set>
 #include <cstdbool>
 
@@ -15,7 +15,7 @@ using namespace std;
 class Block {
     public:
         Block(const vector<uint8_t> &data,
-              unordered_map<string, Transaction> &txns,
+              unordered_map<string, Transaction *> &txns,
               unordered_map<string, set<uint32_t>> &unused_outputs,
               unordered_map<string, uint32_t> &bitcoin_ledger,
               uint32_t &idx,
@@ -28,7 +28,7 @@ class Block {
 
     private:
         const vector<uint8_t> &data_;
-        unordered_map<string, Transaction> &txns_;
+        unordered_map<string, Transaction *> &txns_;
         unordered_map<string, set<uint32_t>> &unused_outputs_;
         unordered_map<string, uint32_t> &bitcoin_ledger_;
         uint32_t &idx_, start_idx_, total_txns_, &processed_txns_;
@@ -40,8 +40,8 @@ class Block {
         string block_name_;
         string my_hash_ = "1f5a0200bc94ae4264642855786d9c2bb436b9e129ef95e6416136c03f339581";
 
-        bool GetTxns(bool has_inputs);
-        void MakeCoinbaseTxn();
+        bool GetTxns(bool is_genesis);
+        Transaction *MakeCoinbaseTxn();
         bool CalculateMerkleRoot();
         bool ConstructHeader();
         void GetUnixTime(vector<unsigned char > &time_vector);

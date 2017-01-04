@@ -5,12 +5,10 @@
 #include "Encryption.h"
 
 
-Transaction::Transaction(const vector<uint8_t> &data,
-                         map<string, vector<bool>> &txn_ledger,
-                         uint32_t txn_idx,
-                         uint32_t &idx)
-        : data_(data), txn_ledger_(txn_ledger), txn_idx_(txn_idx), idx_(idx) {
+Transaction::Transaction(const vector<uint8_t> &data, uint32_t &idx)
+        : data_(data), idx_(idx) {
     name_data_.reserve(HASH_SIZE);
+    sig_hash_data_.reserve(HASH_SIZE);
     start_idx_ = idx;
 }
 
@@ -36,8 +34,6 @@ void Transaction::ParseTransaction() {
 
     uint32_t output_count = Shared::BinToDecimal(num_outputs_, SHORT_SIZE);
     output_specifiers_.reserve(output_count);
-    vector<bool> output_idx_used;
-    output_idx_used.reserve(output_count);
 
     for(int k = 0; k < output_count; k++) {
         class OutputSpecifier *output = new class OutputSpecifier(data_, idx_, false);
@@ -46,13 +42,10 @@ void Transaction::ParseTransaction() {
         //output->Print();
 
         output_specifiers_.push_back(output);
-        output_idx_used.push_back(false);
     }
 
     BuildTxnName();
-
-    //txn hash string -> vector of boolean flags specifying if output has been used as an input yet
-    txn_ledger_[name_] = output_idx_used;
+    BuildSignatureData();
 }
 
 void Transaction::BuildTxnName() {
@@ -66,14 +59,17 @@ void Transaction::BuildTxnName() {
     name_ = Encryption::GenerateDHash(txn_slice);
 }
 
-void Transaction::BuildTxnSignatureHash() {
+//Create byte vector of transaction, eliding signatures
+void Transaction::BuildSignatureData() {
     Shared::PushArrayToVector(num_inputs_, SHORT_SIZE, sig_hash_data_);
 
     for(int i = 0; i < input_specifiers_.size(); i++) {
-        Shared::PushArrayToVector(input_specifiers_[i]->GetPrevTxnNameArr(), HASH_SIZE, sig_hash_data_);
-        Shared::PushArrayToVector(input_specifiers_[i]->GetOutputIdxArr(), SHORT_SIZE, sig_hash_data_);
-        Shared::PushArrayToVector(input_specifiers_[i]->GetKeyLenArr(), SHORT_SIZE, sig_hash_data_);
-
+        Shared::PushArrayToVector(input_specifiers_[i]->GetPrevTxnNameArr(),
+                                  HASH_SIZE, sig_hash_data_);
+        Shared::PushArrayToVector(input_specifiers_[i]->GetOutputIdxArr(),
+                                  SHORT_SIZE, sig_hash_data_);
+        Shared::PushArrayToVector(input_specifiers_[i]->GetKeyLenArr(),
+                                  SHORT_SIZE, sig_hash_data_);
         sig_hash_data_.insert(sig_hash_data_.end(),
                               input_specifiers_[i]->GetPublicKeyVector().begin(),
                               input_specifiers_[i]->GetPublicKeyVector().end());
@@ -85,14 +81,11 @@ void Transaction::BuildTxnSignatureHash() {
         Shared::PushArrayToVector(output_specifiers_[i]->GetBtcAmountArr(), INT_SIZE, sig_hash_data_);
         Shared::PushArrayToVector(output_specifiers_[i]->GetHashArr(), HASH_SIZE, sig_hash_data_);
     }
-
-    signature_hash_ = Encryption::GenerateDHash(sig_hash_data_);
 }
 
 void Transaction::MakeCoinbaseTxn() {
     //size of txn
     name_data_.reserve(40);
-    uint8_t *num_btc, *key_hash;
 
     class OutputSpecifier *output = new class OutputSpecifier(data_, idx_, true);
     num_inputs_[0] = 0;
@@ -103,28 +96,13 @@ void Transaction::MakeCoinbaseTxn() {
     output_specifiers_.reserve(1);
     output_specifiers_.push_back(output);
 
-    num_btc = output->GetBtcAmountArr();
-    key_hash = output->GetHashArr();
-
     name_data_.push_back(num_inputs_[0]);
     name_data_.push_back(num_inputs_[1]);
     name_data_.push_back(num_outputs_[0]);
     name_data_.push_back(num_outputs_[1]);
 
-    for(int i = 0; i < INT_SIZE; i++)
-        name_data_.push_back(num_btc[i]);
-
-    for(int j = 0; j < HASH_SIZE; j++)
-        name_data_.push_back(key_hash[j]);
+    Shared::PushArrayToVector(output->GetBtcAmountArr(), INT_SIZE, name_data_);
+    Shared::PushArrayToVector(output->GetHashArr(), HASH_SIZE, name_data_);
 
     name_ = Encryption::GenerateDHash(name_data_);
 }
-
-/*
- * todo
-void Transaction::RemoveOutputs() {
-    for(auto it = output_specifiers_.begin(); it != output_specifiers_.end(); ++it) {
-        txn_ledger_.erase(Shared::BinToString(it->recipient_key_hash));
-    }
-}
- */
