@@ -1,3 +1,4 @@
+#include "BTCMiner.h"
 #include "Encryption.h"
 #include "Shared.h"
 
@@ -70,13 +71,13 @@ namespace Encryption {
         return final_vec;
     }
 
-    bool VerifySignature(const std::vector<uint8_t> &signature,
+    bool VerifySignature(const std::vector<uint8_t> &public_key,
+                         uint8_t *signature,
                          const std::vector<uint8_t> &data) {
-        Botan::Public_Key *pub_key = Botan::X509::load_key(signature);
-
+        Botan::Public_Key *pub_key = Botan::X509::load_key(public_key);
         Botan::PK_Verifier verifier(*pub_key, "EMSA4(SHA-256)");
         verifier.update(data);
-        return verifier.check_signature(signature);
+        return verifier.check_signature(signature, SIG_SIZE);
     }
 
     Botan::Public_Key *ImportPublicKey(std::vector<uint8_t> key_bytes) {

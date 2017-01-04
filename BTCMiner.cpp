@@ -1,4 +1,6 @@
 #include <map>
+#include <set>
+#include <vector>
 #include <iostream>
 #include <cstdbool>
 
@@ -12,9 +14,12 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     class BlockChain *blockchain = new class BlockChain();
+    uint32_t read_idx = 0, total_txns = 1, processed_txns = 0;
+
     vector<uint8_t> binary_data;
-    map<string, uint32_t> bitcoin_ledger, txn_ledger;
-    uint32_t read_idx = 0, total_txns = 0, processed_txns = 0;
+    unordered_map<string, Transaction> txns;
+    unordered_map<string, set<uint32_t>> unused_outputs;
+    unordered_map<string, uint32_t> bitcoin_ledger;
 
     class Connect *connection = new class Connect();
     connection->GetStreamBytes(binary_data);
@@ -23,9 +28,15 @@ int main(int argc, char *argv[]) {
     uint8_t txn_count[INT_SIZE] = {0};
 
 
-    class Block *genesis = new class Block(binary_data, bitcoin_ledger,
-                                           txn_ledger, read_idx, empty_hash);
-    read_idx = genesis->ParseGenesisBlock(prev_header_hash);
+    class Block *genesis = new class Block(binary_data,
+                                           txns,
+                                           unused_outputs,
+                                           bitcoin_ledger,
+                                           read_idx,
+                                           total_txns,
+                                           processed_txns,
+                                           empty_hash);
+    read_idx = genesis->ParseGenesisBlock();
 
     blockchain->AddBlock(genesis);
 
@@ -33,19 +44,25 @@ int main(int argc, char *argv[]) {
 
     total_txns = Shared::BinToDecimal(txn_count, INT_SIZE);
 
-    //while(processed_txns < total_txns) {
-        class Block *txn_block = new class Block(binary_data, bitcoin_ledger,
-                                                txn_ledger, read_idx, prev_header_hash);
+    while(processed_txns < total_txns) {
+        class Block *txn_block = new class Block(binary_data,
+                                                 txns,
+                                                 unused_outputs,
+                                                 bitcoin_ledger,
+                                                 read_idx,
+                                                 total_txns,
+                                                 processed_txns,
+                                                 prev_header_hash);
 
-        read_idx = txn_block->ParseData(total_txns, processed_txns);
-    //}
+        read_idx = txn_block->ParseData();
 
-    /*
-    // recipient hash, txn index
-    for(auto it = txn_ledger.begin(); it != txn_ledger.end(); ++it) {
-        cout << "key:value: " << it->first << " : " << it->second << endl;
+        /* todo: activate
+        if(txn_block->ConstructHeader()) {
+            blockchain->AddBlock(txn_block);
+        }
+        */
+
+        //todo: output binary file
+        //todo: print bitcoin ledger
     }
-     */
-
-
 }

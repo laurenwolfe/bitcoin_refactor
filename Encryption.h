@@ -12,7 +12,8 @@ namespace Encryption {
 
     std::vector<uint8_t> GenerateDHashVector(std::vector<uint8_t> &byte_vector);
 
-    bool VerifySignature(const std::vector<uint8_t> &signature,
+    bool VerifySignature(const std::vector<uint8_t> &public_key,
+                         uint8_t *signature,
                          const std::vector<uint8_t> &data);
 
     Botan::Public_Key *ImportPublicKey(std::vector<uint8_t> key_bytes);

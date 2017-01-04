@@ -18,6 +18,7 @@ namespace Shared {
     std::string BinToBitString(const std::vector<uint8_t> &binary_data);
     std::string BinToString(const std::vector<uint8_t> &binary_data);
     std::string BinToString(uint8_t *binary_data, uint8_t size);
+    void PushArrayToVector(uint8_t *arr, uint32_t size, std::vector<uint8_t> &vec);
     void StringToArray(const std::string &str, uint8_t *arr);
 
     //writes to arrays containing generic types

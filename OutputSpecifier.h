@@ -13,7 +13,9 @@ class OutputSpecifier {
         void Print();
 
         uint32_t GetBtcAmount() { return Shared::BinToDecimal(btc_amount_, INT_SIZE); };
-        std::string GetHash() { return Shared::BinToString(recipient_key_hash_, HASH_SIZE); };
+        uint8_t *GetBtcAmountArr() { return btc_amount_; };
+        std::string GetKeyHash() { return Shared::BinToString(recipient_key_hash_, HASH_SIZE); };
+        uint8_t *GetHashArr() { return recipient_key_hash_; };
 
     private:
         const std::vector<uint8_t> &data_;

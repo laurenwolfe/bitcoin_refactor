@@ -68,7 +68,7 @@ namespace Shared {
         return bit_str;
     }
 
-     void StringToArray(const std::string &str, uint8_t *arr) {
+    void StringToArray(const std::string &str, uint8_t *arr) {
          int j = 0;
 
          for(int i = 0; i < str.size(); i = i + 2) {
@@ -77,5 +77,11 @@ namespace Shared {
              arr[j] = (uint8_t)(std::stoi(substr, nullptr, 16));
              j++;
          }
+    }
+
+    void PushArrayToVector(uint8_t *arr, uint32_t size, std::vector<uint8_t> &vec) {
+        for(int i = 0; i < size; i++) {
+            vec.push_back(arr[i]);
+        }
     }
 }
